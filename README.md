@@ -81,7 +81,7 @@ curl -H "Content-Type: application/json" \
 **Deployment Steps:**
 1. Connect GitHub repository to Vercel
 2. Set environment variables in Vercel dashboard:
-   - `STUDENT_SECRET` = `tmdb-explorer-2025-manav`
+   - `STUDENT_SECRET` = `your-secret-here`
    - `TMDB_API_KEY` = `your-tmdb-api-key`
 3. Deploy automatically on git push
 
