@@ -98,13 +98,6 @@ curl -H "Content-Type: application/json" \
 - **API Integration:** Frontend automatically uses Vercel API URL
 - **Fallback System:** App works even if TMDB API fails (cached data + local images)
 
-## 📋 Submission Details
-
-**For Exam Submission:**
-- **API URL:** `https://tmdb-explorer-api-one.vercel.app`
-- **Frontend URL:** `https://manavkdubey.github.io/tmdb-explorer-api/`
-- **Secret:** `tmdb-explorer-2025-manav`
-
 ## Evaluation Notification
 
 After deploying, send evaluation notification:
