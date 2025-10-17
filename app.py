@@ -7,14 +7,16 @@ from datetime import datetime
 
 app = FastAPI(title="TMDB Explorer API", version="1.0.0")
 
-# Railway will set these as environment variables
-STUDENT_SECRET = os.getenv("STUDENT_SECRET", "tmdb-explorer-2024")
-TMDB_API_KEY = os.getenv("TMDB_API_KEY", "demo-key")
+# Environment variables - must be set in deployment
+STUDENT_SECRET = os.getenv("STUDENT_SECRET")
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 TMDB_BASE = "https://api.themoviedb.org/3"
 
-# Log configuration for debugging
-print(f"STUDENT_SECRET configured: {STUDENT_SECRET != 'tmdb-explorer-2024'}")
-print(f"TMDB_API_KEY configured: {TMDB_API_KEY != 'demo-key'}")
+# Validate required environment variables
+if not STUDENT_SECRET:
+    raise ValueError("STUDENT_SECRET environment variable is required")
+if not TMDB_API_KEY:
+    raise ValueError("TMDB_API_KEY environment variable is required")
 
 class BuildRequest(BaseModel):
     email: str
@@ -28,9 +30,10 @@ class BuildRequest(BaseModel):
     attachments: list[dict] = []
 
 
-def verify_secret(x_secret: str = Header(...)):
-    if x_secret != STUDENT_SECRET:
+def verify_secret(x_secret: str = Header(None)):
+    if x_secret and x_secret != STUDENT_SECRET:
         raise HTTPException(status_code=401, detail="Invalid secret")
+    return x_secret
 
 
 @app.post("/build")
@@ -40,8 +43,9 @@ async def build_app(request: BuildRequest, _: None = Depends(verify_secret)):
     return JSONResponse({"status":"accepted","task":request.task,"round":request.round}, status_code=200)
 
 
+# Public endpoints for frontend (no authentication required)
 @app.get("/tmdb/trending")
-async def trending(media_type: str = Query("movie", pattern="^(movie|tv|all)$"), time_window: str = Query("day", pattern="^(day|week)$"), _: None = Depends(verify_secret)):
+async def trending(media_type: str = Query("movie", pattern="^(movie|tv|all)$"), time_window: str = Query("day", pattern="^(day|week)$")):
     url = f"{TMDB_BASE}/trending/{media_type}/{time_window}"
     r = requests.get(url, params={"api_key": TMDB_API_KEY}, timeout=10)
     if r.status_code != 200:
@@ -50,7 +54,7 @@ async def trending(media_type: str = Query("movie", pattern="^(movie|tv|all)$"),
 
 
 @app.get("/tmdb/details")
-async def details(id: int = Query(...), media_type: str = Query("movie", pattern="^(movie|tv)$"), _: None = Depends(verify_secret)):
+async def details(id: int = Query(...), media_type: str = Query("movie", pattern="^(movie|tv)$")):
     url = f"{TMDB_BASE}/{media_type}/{id}"
     r = requests.get(url, params={"api_key": TMDB_API_KEY, "append_to_response":"credits,images,videos"}, timeout=10)
     if r.status_code == 404:
@@ -68,7 +72,7 @@ class SearchRequest(BaseModel):
 
 
 @app.post("/tmdb/search")
-async def search(body: SearchRequest, _: None = Depends(verify_secret)):
+async def search(body: SearchRequest):
     if body.media_type not in {"movie","tv","person","multi"}:
         raise HTTPException(status_code=400, detail="invalid media_type")
     path = "search/multi" if body.media_type == "multi" else f"search/{body.media_type}"
@@ -84,5 +88,5 @@ async def search(body: SearchRequest, _: None = Depends(verify_secret)):
 
 
 @app.get("/health")
-async def health(_: None = Depends(verify_secret)):
-    return {"status":"healthy","timestamp":datetime.now().isoformat(),"api_key_configured": TMDB_API_KEY!="demo-key"}
+async def health():
+    return {"status":"healthy","timestamp":datetime.now().isoformat()}

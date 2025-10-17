@@ -57,8 +57,12 @@ const API_BASE = location.origin
 const IMG = 'https://image.tmdb.org/t/p/w300'
 const IMG_BIG = 'https://image.tmdb.org/t/p/w500'
 
-async function fetchJSON(url, opts){
-  const res = await fetch(url, opts)
+async function fetchJSON(url, opts = {}){
+  const headers = {
+    'Content-Type': 'application/json',
+    ...opts.headers
+  }
+  const res = await fetch(url, { ...opts, headers })
   if(!res.ok) throw new Error('Request failed')
   return await res.json()
 }
