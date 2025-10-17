@@ -73,16 +73,37 @@ curl -H "Content-Type: application/json" \
   http://localhost:8000/tmdb/trending
 ```
 
-### Frontend Usage
+## 🚀 Deployment
 
-1. **Deploy to GitHub Pages**:
-   - Create a public repository with name containing the task ID
-   - Copy contents of `public/` folder to repository root
-   - Enable GitHub Pages in repository settings
-   - Access at `https://username.github.io/repository-name/`
+### Backend API (Vercel)
+**Live URL:** `https://tmdb-explorer-api-one.vercel.app`
 
-2. **Update API URL**:
-   - If deploying API separately, update `API_BASE` in `public/index.html` to point to your deployed API URL
+**Deployment Steps:**
+1. Connect GitHub repository to Vercel
+2. Set environment variables in Vercel dashboard:
+   - `STUDENT_SECRET` = `tmdb-explorer-2025-manav`
+   - `TMDB_API_KEY` = `your-tmdb-api-key`
+3. Deploy automatically on git push
+
+### Frontend (GitHub Pages)
+**Live URL:** `https://manavkdubey.github.io/tmdb-explorer-api/`
+
+**Deployment Steps:**
+1. Files moved to repository root for GitHub Pages compatibility
+2. GitHub Pages enabled with source: `main` branch, `/` path
+3. Automatic deployment on git push
+
+### Configuration
+- **Secret Management:** Frontend secret stored in `config.js` file
+- **API Integration:** Frontend automatically uses Vercel API URL
+- **Fallback System:** App works even if TMDB API fails (cached data + local images)
+
+## 📋 Submission Details
+
+**For Exam Submission:**
+- **API URL:** `https://tmdb-explorer-api-one.vercel.app`
+- **Frontend URL:** `https://manavkdubey.github.io/tmdb-explorer-api/`
+- **Secret:** `tmdb-explorer-2025-manav`
 
 ## Evaluation Notification
 
