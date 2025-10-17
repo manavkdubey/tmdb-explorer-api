@@ -18,7 +18,7 @@ A comprehensive movie and TV show explorer that provides search, trending conten
 - **POST /tmdb/search** - Search movies, TV shows, or people
 - **GET /health** - Health check endpoint
 
-All endpoints require `X-Secret` header with the correct secret.
+All endpoints require secret verification in the request body.
 
 ## Setup
 
@@ -29,7 +29,7 @@ pip install -r requirements.txt
 
 2. **Set environment variables**:
 ```bash
-export STUDENT_SECRET="tmdb-explorer-2024"
+export STUDENT_SECRET="your-secret-here"
 export TMDB_API_KEY="<your_tmdb_api_key>"
 ```
 
@@ -45,11 +45,10 @@ uvicorn app:app --host 0.0.0.0 --port 8000
 **Build Request**:
 ```bash
 curl -X POST http://localhost:8000/build \
-  -H "X-Secret: tmdb-explorer-2024" \
   -H "Content-Type: application/json" \
   -d '{
     "email":"student@example.com",
-    "secret":"tmdb-explorer-2024",
+    "secret":"your-secret-here",
     "task":"tmdb-explorer-xyz",
     "round":1,
     "nonce":"ab12-xyz",
@@ -62,16 +61,16 @@ curl -X POST http://localhost:8000/build \
 
 **Search Movies**:
 ```bash
-curl -H "X-Secret: tmdb-explorer-2024" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"inception","media_type":"movie","year":2010}' \
+curl -H "Content-Type: application/json" \
+  -d '{"secret":"your-secret-here","query":"inception","media_type":"movie","year":2010}' \
   http://localhost:8000/tmdb/search
 ```
 
 **Get Trending**:
 ```bash
-curl -H "X-Secret: tmdb-explorer-2024" \
-  "http://localhost:8000/tmdb/trending?media_type=all&time_window=day"
+curl -H "Content-Type: application/json" \
+  -d '{"secret":"your-secret-here","media_type":"all","time_window":"day"}' \
+  http://localhost:8000/tmdb/trending
 ```
 
 ### Frontend Usage
