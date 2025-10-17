@@ -1,0 +1,9 @@
+{
+  "email": "student@example.com",
+  "task": "tmdb-explorer-xyz",
+  "round": 1,
+  "nonce": "ab12-xyz",
+  "repo_url": "https://github.com/username/tmdb-explorer-xyz",
+  "commit_sha": "abc123def456",
+  "pages_url": "https://username.github.io/tmdb-explorer-xyz/"
+}

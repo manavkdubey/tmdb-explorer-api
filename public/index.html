@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TMDB Explorer</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+body{background:#0b0d12;color:#e6e9ef}
+.card{background:#151a23;border-color:#1e2633}
+.form-control, .form-select{background:#0f141b;border-color:#243046;color:#e6e9ef}
+.form-control:focus{background:#0f141b;color:#e6e9ef}
+.poster{width:100%;border-radius:8px}
+.poster-sm{width:58px;height:87px;object-fit:cover;border-radius:6px}
+.badge-pill{border-radius:999px}
+a{color:#7db7ff}
+</style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 m-0"><i class="bi bi-film"></i> TMDB Explorer</h1>
+    <div class="text-end small text-secondary">Powered by TMDB API</div>
+  </div>
+
+  <div class="card mb-3"><div class="card-body">
+    <div class="row g-2">
+      <div class="col-md-5"><input id="q" class="form-control" placeholder="Search movies, TV shows, people"></div>
+      <div class="col-md-2"><select id="type" class="form-select"><option value="multi">All</option><option value="movie">Movies</option><option value="tv">TV</option><option value="person">People</option></select></div>
+      <div class="col-md-2"><input id="year" type="number" class="form-control" placeholder="Year"></div>
+      <div class="col-md-2"><button id="search" class="btn btn-primary w-100">Search</button></div>
+      <div class="col-md-1"><button id="trending" class="btn btn-outline-light w-100">Trending</button></div>
+    </div>
+  </div></div>
+
+  <div id="results" class="row g-3"></div>
+
+  <div class="modal fade" id="detailsModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content" style="background:#121722;color:#e6e9ef">
+    <div class="modal-header"><h5 class="modal-title" id="modalTitle"></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <div class="row">
+        <div class="col-md-4"><img id="modalPoster" class="poster" alt="Poster"></div>
+        <div class="col-md-8">
+          <div id="modalOverview" class="mb-2"></div>
+          <div id="modalFacts" class="small text-secondary mb-2"></div>
+          <div><strong>Cast</strong><div id="modalCast" class="mt-1"></div></div>
+        </div>
+      </div>
+    </div>
+  </div></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API_BASE = location.origin
+const IMG = 'https://image.tmdb.org/t/p/w300'
+const IMG_BIG = 'https://image.tmdb.org/t/p/w500'
+
+async function fetchJSON(url, opts){
+  const res = await fetch(url, opts)
+  if(!res.ok) throw new Error('Request failed')
+  return await res.json()
+}
+
+function tplCard(item){
+  const media = item.media_type || (item.first_air_date ? 'tv' : (item.release_date ? 'movie' : 'person'))
+  const title = item.title || item.name
+  const date = item.release_date || item.first_air_date || ''
+  const poster = item.poster_path ? IMG+item.poster_path : ''
+  const rating = item.vote_average ? Math.round(item.vote_average*10)/10 : null
+  const overview = (item.overview||'').slice(0,160)
+  return `<div class="col-sm-6 col-md-4 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body">
+        ${poster?`<img class="poster mb-2" src="${poster}" alt="poster">`:''}
+        <h6 class="mb-1">${title}</h6>
+        <div class="small text-secondary mb-2">${date}${rating?` · ⭐ ${rating}`:''}</div>
+        <div class="small">${overview}</div>
+      </div>
+      <div class="card-footer bg-transparent border-0 d-flex gap-2">
+        ${media!=='person'?`<button class="btn btn-sm btn-primary" data-id="${item.id}" data-type="${media}" onclick="openDetails(${item.id}, '${media}')">Details</button>`:''}
+        <a class="btn btn-sm btn-outline-light" target="_blank" href="https://www.themoviedb.org/${media}/${item.id}">TMDB</a>
+      </div>
+    </div>
+  </div>`
+}
+
+async function search(){
+  const body = { query: q.value.trim(), media_type: type.value, page: 1 }
+  const y = parseInt(year.value,10); if(!isNaN(y)) body.year = y
+  const data = await fetchJSON('/tmdb/search', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+  results.innerHTML = (data.results||[]).map(tplCard).join('') || '<div class="text-center text-secondary">No results</div>'
+}
+
+async function trendingNow(){
+  const data = await fetchJSON('/tmdb/trending?media_type=all&time_window=day')
+  results.innerHTML = (data.results||[]).map(tplCard).join('')
+}
+
+async function openDetails(id, media){
+  const data = await fetchJSON(`/tmdb/details?id=${id}&media_type=${media}`)
+  modalTitle.textContent = data.title || data.name
+  modalOverview.textContent = data.overview || 'No overview'
+  modalPoster.src = data.poster_path ? (IMG_BIG+data.poster_path) : ''
+  const facts = []
+  if(data.release_date||data.first_air_date) facts.push(`Released: ${data.release_date||data.first_air_date}`)
+  if(data.runtime) facts.push(`Runtime: ${data.runtime} min`)
+  if(data.number_of_seasons) facts.push(`Seasons: ${data.number_of_seasons}`)
+  if(data.vote_average) facts.push(`Rating: ${Math.round(data.vote_average*10)/10}`)
+  modalFacts.textContent = facts.join(' · ')
+  const cast = (data.credits && data.credits.cast ? data.credits.cast.slice(0,8) : [])
+  modalCast.innerHTML = cast.map(c=>`<span class="badge text-bg-secondary me-1 mb-1">${c.name}</span>`).join('') || '<span class="text-secondary">N/A</span>'
+  new bootstrap.Modal(document.getElementById('detailsModal')).show()
+}
+
+searchBtnInit()
+function searchBtnInit(){
+  window.q = document.getElementById('q')
+  window.type = document.getElementById('type')
+  window.year = document.getElementById('year')
+  window.searchBtn = document.getElementById('search')
+  window.trendingBtn = document.getElementById('trending')
+  window.results = document.getElementById('results')
+  window.modalTitle = document.getElementById('modalTitle')
+  window.modalOverview = document.getElementById('modalOverview')
+  window.modalPoster = document.getElementById('modalPoster')
+  window.modalFacts = document.getElementById('modalFacts')
+  window.modalCast = document.getElementById('modalCast')
+  searchBtn.addEventListener('click', search)
+  trendingBtn.addEventListener('click', trendingNow)
+  trendingNow()
+}
+</script>
+</body>
+</html>
